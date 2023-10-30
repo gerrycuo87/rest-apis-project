@@ -1,10 +1,12 @@
 import os
 
+import redis
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_smorest import Api
+from rq import Queue
 
 import models
 from blocklist import BLOCKLIST
@@ -18,7 +20,11 @@ from resources.user import blp as UserBlueprint
 def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
-
+    
+    connection = redis.from_url(
+        os.getenv("REDIS_URL")
+    )
+    app.queue = Queue("emails", connection=connection)
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Stores REST API"
     app.config["API_VERSION"] = "v1"
